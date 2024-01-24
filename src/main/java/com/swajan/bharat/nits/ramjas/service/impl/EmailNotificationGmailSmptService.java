@@ -16,7 +16,9 @@ import org.springframework.stereotype.Service;
 
 import java.io.File;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 ;
 
@@ -38,6 +40,7 @@ public class EmailNotificationGmailSmptService  {
 
     public List<String> sendPaymentConfirmationMail() throws MessagingException {
         List<String> emailSentList = new ArrayList<>();
+
 
         List<EventRegistration> pending = registrationRepository.findByEmailSent("No");
 
@@ -72,46 +75,78 @@ public class EmailNotificationGmailSmptService  {
         return emailSentList;
     }
 
+    //SELECT email FROM momline_sch.event_registration where email in (select email from alumni_leads);
     public List<String> sendMailtoLeads() throws MessagingException {
         List<String> leads = new ArrayList<>();
         List<String> erroredEmails = new ArrayList<>();
 
-        List<AlumniLeads> allLeads = leadRepository.findByAdmissionYearLessThanEqual("2013");
+        List<AlumniLeads> allLeads = leadRepository.findByAdmissionYearBetween("2010","2013");
 
-        System.out.println("Less than 2010 :"+allLeads.size());
+        System.out.println("between 2010 than 2013 :"+allLeads.size());
         for (AlumniLeads lead : allLeads){
-            if (lead.getEmailSent() != null || "Yes".equalsIgnoreCase(lead.getInvalidData())) //If already sent continue
-                continue;
-            String formattedMessage = String.format(MessageTemplates.leadsIntimationMail,
-                    lead.getFName(),
-                    RegistrationIDGenerator.greetingOfTheDay(),
-                    "3PM Onwards",
-                    "+919667126437"
-            );
+            if (lead.getEmailSent() == null && lead.getInvalidData() == null){
 
-            String subject = "Dear "+ lead.getFName() +
-                    " ! Ramjas College Alumni Meet-2024 is eagerly waiting for your presence !!";
-            try {
-                String sentMail = sendEmail(lead.getEmail(),formattedMessage,subject);
+                String formattedMessage = null;
+                try {
+                    formattedMessage = String.format(MessageTemplates.leadsIntimationMail,
+                            lead.getFName(),
+                            RegistrationIDGenerator.greetingOfTheDay()
+                    );
+                    String subject = "Dear "+ lead.getFName() +
+                            " ! Ramjas College Alumni Meet-2024 is eagerly waiting for your presence !!";
+                    String sentMail = sendEmail(lead.getEmail(),formattedMessage,subject);
 
-                if (sentMail != null){
-                    lead.setEmailSent(Boolean.TRUE);
-                    leadRepository.save(lead);
+                    if (sentMail != null){
+                        lead.setEmailSent(Boolean.TRUE);
+                        leadRepository.save(lead);
+                    }
+                    leads.add(sentMail+"-"+lead.getAdmissionYear());
+                    System.out.println("Mail Sent to :"+lead.getEmail());
+                } catch (Exception e) {
+                    System.out.println("Errored Email :"+lead.getEmail());
+                    erroredEmails.add(lead.getEmail());
                 }
-                leads.add(sentMail+"-"+lead.getAdmissionYear());
-                System.out.println("Mail Sent to :"+lead.getEmail());
-            } catch (Exception e) {
-                System.out.println("Errored Email :"+lead.getEmail());
-                erroredEmails.add(lead.getEmail());
             }
         }
-        System.out.println("Errored Emails :"+erroredEmails);
+        System.out.println("Error Emails :"+erroredEmails);
         System.out.println("Finally Total mails sent to # :"+leads.size());
         System.out.println("Mail Sent list and batch :"+leads);
 
         return leads;
     }
 
+    public List<String> lastDateReminder(){
+        String subject = " Reminder: Last Date for Event Registration [Ramjas Alumni Meet - 2024] Approaching !";
+
+        List<String> emailSentList = new ArrayList<>();
+
+        List<EventRegistration> all = registrationRepository.findAll();
+
+        all.stream().forEach(row ->{
+            String formattedMessage = String.format(MessageTemplates.lastDateReminder,
+                    row.getFName(),RegistrationIDGenerator.greetingOfTheDay());
+
+            String sentToEmail="test@mail.com";
+            if("nits.tiwary@gmail.com".equals(row.getEmail())){
+                //sendMail(subject, emailSentList, row, formattedMessage);
+            }
+            sendMail(subject, emailSentList, row, formattedMessage);
+        });
+
+        return emailSentList;
+    }
+
+    private void sendMail(String subject, List<String> emailSentList, EventRegistration row, String formattedMessage) {
+        String sentToEmail;
+        try {
+            sentToEmail = sendEmail(row.getEmail(), formattedMessage, subject);
+            System.out.println("Reminder Mail Sent to :"+ row.getEmail());
+            emailSentList.add(sentToEmail);
+        } catch (MessagingException e) {
+            System.err.println("errored email "+e.getMessage());
+            throw new RuntimeException(e);
+        }
+    }
 
 
     private String sendEmail(String toEmail, String formattedMessage, String subject) throws MessagingException {

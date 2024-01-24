@@ -59,6 +59,8 @@ public class AlumniLeads {
         private Boolean whatsappSent ;
         @Column(name = "data_seeded_from")
         private String dataFileName ;
-        @Column(name = "is_valid_data")
+        @Column(name = "invalid_data")
         private String invalidData ;
+        @Column(name = "leads_converted")
+        private String leadsConverted ;
 }

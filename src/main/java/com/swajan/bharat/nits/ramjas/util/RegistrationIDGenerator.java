@@ -28,11 +28,19 @@ public class RegistrationIDGenerator {
     }
 
     private static String generateHashValue(EventRegistrationData data) {
-        int hashvalue = data.hashCode() % 100;
-        if (hashvalue < 10){
-            hashvalue += hashvalue + new Random().nextInt(90) + 10;
+        EventRegistrationData hashData = new EventRegistrationData();
+        hashData.setEmail(data.getEmail());
+        hashData.setFName(data.getFName());
+        hashData.setLName(data.getLName());
+        hashData.setPhone(data.getPhone());
+        hashData.setBatch(data.getBatch());
+        hashData.setSubject(data.getSubject());
+        hashData.setOccupation(data.getOccupation()); // This way using after 24/Jan
+        int hashValue = hashData.hashCode() % 100;
+        if (hashValue < 10){
+            hashValue += hashValue + new Random().nextInt(90) + 10;
         }
-        return String.valueOf(hashvalue);
+        return String.valueOf(hashValue);
     }
 
     /**
@@ -61,7 +69,7 @@ public class RegistrationIDGenerator {
     private static String extractNameChars(EventRegistrationData data) {
         String fullName = data.getFName() + data.getLName() + data.getMName();
         fullName = fullName.replaceAll("[^a-zA-Z0-9]", "");
-        return fullName.substring(0,3);
+        return fullName.trim().substring(0,3);
     }
 
     private static String extractAdmissionYear(String batch) {
@@ -127,6 +135,7 @@ public class RegistrationIDGenerator {
         }else if(timeOfDay >= 16 && timeOfDay < 24){
             greeting = "Good Evening";
         }
+        System.out.println(greeting);
         return greeting;
     }
 }

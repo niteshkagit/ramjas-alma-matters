@@ -14,7 +14,7 @@ import org.springframework.web.bind.annotation.*;
 import java.util.List;
 
 @RestController
-@RequestMapping("/api/2024/message/email/payment")
+@RequestMapping("/api/2024/message/email")
 public class EmailSenderController {
 
     @Autowired
@@ -37,6 +37,14 @@ public class EmailSenderController {
     public ResponseEntity<List<String>> sendMailToLeads() throws MessagingException {
 
         List<String> strings = smptService.sendMailtoLeads();
+        System.out.println("Mail sent to leads:"+strings);
+        return new ResponseEntity<>(strings,HttpStatus.CREATED);
+    }
+
+    @PostMapping("/reminder1")
+    public ResponseEntity<List<String>> sendMailToConfirmedReminder1() throws MessagingException {
+
+        List<String> strings = smptService.lastDateReminder();
         System.out.println("Mail sent to leads:"+strings);
         return new ResponseEntity<>(strings,HttpStatus.CREATED);
     }

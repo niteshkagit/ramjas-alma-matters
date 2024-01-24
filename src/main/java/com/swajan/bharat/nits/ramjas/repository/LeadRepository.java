@@ -10,4 +10,5 @@ public interface LeadRepository extends JpaRepository<AlumniLeads,String> {
 
 //    @Query("select a from momline_sch.alumni_leads a where a.admission_year <= 2010")
     List<AlumniLeads> findByAdmissionYearLessThanEqual(String admissionYear);
+    List<AlumniLeads> findByAdmissionYearBetween(String start,String end);
 }
